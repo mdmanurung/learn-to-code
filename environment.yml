@@ -1,4 +1,6 @@
 name: learn-to-code
+channels:
+  - conda-forge
 dependencies:
   - python==3.9
   - flake8
