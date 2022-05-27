@@ -21,27 +21,30 @@ jobs:
 
   test:
     needs: qa
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ windows-latest, ubuntu-latest, macos-latest ]
-        python-version: [ 3.9 ]
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
 
-    - uses: actions/setup-python@v2
+    - name: Conda setup
+      uses: s-weigand/setup-conda@v1
       with:
-        python-version: ${{ matrix.python-version }}
+        update-conda: true
 
-    - name: Install Poetry
-      uses: abatilo/actions-poetry@v2.0.0
+    # cache the conda installation to speedup CI runs
+    - uses: actions/cache@v2
+      id: cache
       with:
-        poetry-version: 1.0.10
+        path: /usr/share/miniconda/envs/learn-to-code
+        key: ${{ runner.os }}-conda-cache-${{ hashFiles('environment.yml') }}
 
-    - name: Install dependencies
-      run: poetry install
+    - name: Conda environment creation
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: |
+        conda env create -f environment.yml
+        source activate learn-to-code
 
     - name: Run tests
-      run: poetry run pytest
+      run: |
+        source activate learn-to-code
+        pytest -v
